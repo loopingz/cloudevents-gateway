@@ -1,0 +1,11 @@
+{
+  "name": "cloudevents-gateway",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Remi Cattiau <remi@cattiau.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@webda/core": "^1.0.0-beta.7",
+    "cloudevents": "^3.2.0"
+  }
+}
