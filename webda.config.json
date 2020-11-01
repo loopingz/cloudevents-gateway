@@ -1,0 +1,19 @@
+{
+  "parameters": {
+    "sessionSecret": "XtmAOFnT57onTPNGW8Fs8UzkuKF2EN21VBgjSmMb2pLMELZDuXcCk+8g92U99kf4WbYfSq9SPddq6iU62R+p1BZgss2f22v9hOF8p4kCaNXId4nkLpcpFzxpwj75kCo62PIR7NfikTUeB6mUAWnnXQd48fJTSShPOaIVblPbvbPSqMg2DFTJiPuuXcBA+rcMPvO+Uhk3nlgNXTLJSfP4jB6ungk2rn+Ryv6ouf/I4pYdMPb4anzCtmmbeoDvTWzb"
+  },
+  "services": {
+    "ResourceService": {
+      "type": "Webda/ResourceService",
+      "url": "/demo/ui",
+      "folder": "./resources",
+      "rootRedirect": true
+    },
+    "ProxyStore": {
+      "type": "Webda/MemoryStore",
+      "model": "CloudEventsGateway/Proxy",
+      "expose": "/proxies"
+    }
+  },
+  "version": 2
+}
