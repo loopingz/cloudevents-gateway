@@ -1,0 +1,98 @@
+body {
+  height: 100%;
+}
+.App {
+  text-align: center;
+  max-height: 100vh;
+}
+
+.App-logo {
+  height: 40px;
+  pointer-events: none;
+}
+
+.App-content {
+  background-color: white;
+  flex-direction: row;
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 60px);
+  justify-content: space-evenly;
+}
+.App-content > div {
+  width: 100%;
+  border-right: 3px solid #282c34;
+}
+.App-content > div:last-child {
+  border-right: 0px solid #282c34;
+}
+
+.Column-header {
+  background-color: #282c34;
+  height: 40px;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  padding-top: 10px;
+}
+
+.serviceBlock {
+  border-bottom: 1px solid #282c34;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.cloudevent {
+  border-bottom: 1px solid #282c34;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.gwRow {
+  display: flex;
+  flex-direction: row;
+
+  padding: 20px;
+  justify-content: space-between;
+}
+.mapRow {
+  font-size: 18px;
+  padding: 10px;
+}
+
+.mapRowSelected {
+  background-color: #282c347f;
+}
+
+.mapRowSubscribed {
+  border-left: 15px solid rgb(5, 255, 5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

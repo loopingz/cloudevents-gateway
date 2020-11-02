@@ -56,6 +56,7 @@ export class SubscriptionService extends Service {
       subscription.load(ctx.getRequestBody());
       this.log("INFO", "Adding a new subscription", subscription);
       await this.store.save(subscription, ctx);
+      subscription.id = subscription.uuid;
       ctx.write(subscription);
     } else {
       let result = [];
@@ -81,11 +82,12 @@ export class SubscriptionService extends Service {
         ctx.write(subscription);
         break;
       case "PUT":
-        await subscription.update({ ...ctx.getRequestBody(), uuid: subscription.uuid });
+        await subscription.update({ ...ctx.getRequestBody(), id: subscription.id });
         ctx.write(subscription);
         break;
       case "DELETE":
         await subscription.delete();
+        this.log("INFO", "Remove subscription", subscription.id);
         break;
     }
   }

@@ -11,8 +11,7 @@
     },
     "ProxyStore": {
       "type": "Webda/MemoryStore",
-      "model": "CloudEventsGateway/Proxy",
-      "expose": "/proxies"
+      "model": "CloudEventsGateway/Proxy"
     }
   },
   "version": 2
