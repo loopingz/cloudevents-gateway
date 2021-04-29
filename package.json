@@ -1,6 +1,6 @@
 {
   "name": "cloudevents-gateway",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "author": "Remi Cattiau <remi@cattiau.com>",
   "license": "MIT",
