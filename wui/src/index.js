@@ -16,7 +16,11 @@ import { Provider } from "react-redux";
 import CloudEventController from "./Controller";
 new CloudEventController();
 
-CloudEventController.setEndpoint(window.location.origin);
+if (window.location.origin === "http://localhost:3000") {
+  CloudEventController.setEndpoint("http://localhost:18080");
+} else {
+  CloudEventController.setEndpoint(window.location.origin);
+}
 //
 
 const persistConfig = {

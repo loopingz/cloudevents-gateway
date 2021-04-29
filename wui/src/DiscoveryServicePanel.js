@@ -18,8 +18,8 @@ export default function DiscoveryServicePanel() {
           <div className="serviceBlock">
             <h3>{s.name}</h3>
             <div>
-              {s.types.map(t => {
-                return <div>{t.type}</div>;
+              {(s.events || []).map(e => {
+                return <div>{e.type}</div>;
               })}
             </div>
           </div>

@@ -15,7 +15,7 @@ interface RequestHandler {
 
 export interface SimpleCloudEventV1Service {
   name: string;
-  types: (string | CloudEventV1Type)[];
+  events: (string | CloudEventV1Type)[];
 }
 /**
  * DiscoveryService to implement the discovery spec:
@@ -65,13 +65,13 @@ export class DiscoveryService {
       specversions: ["1.0"],
       protocols: ["http"],
       subscriptionurl: "/subscriptions",
-      types: service.types.map(t => {
-        if (typeof t === "string") {
+      events: service.events.map(e => {
+        if (typeof e === "string") {
           return {
-            type: t
+            type: e
           };
         }
-        return t;
+        return e;
       })
     };
   }
@@ -137,7 +137,7 @@ export class DiscoveryService {
      */
     const filterTypes = (object: CloudEventV1Service, req: unknown) => ({
       ...object,
-      types: object.types.filter(type => permissions(type.type, "Type", req))
+      types: object.events.filter(event => permissions(event.type, "Type", req))
     });
     // Implement services listing
     app.get(`${prefix}/services`, (req, res) => {

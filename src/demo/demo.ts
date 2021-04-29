@@ -2,6 +2,7 @@ import { Context, Route, Service } from "@webda/core";
 import { CloudEvent } from "cloudevents";
 const fetch = require("node-fetch");
 import { v4 as uuidv4 } from "uuid";
+import { CloudEventV1Service } from "../sdk/definition";
 
 class DemoService extends Service {
   eventsBuffer: CloudEvent[] = [];
@@ -101,17 +102,18 @@ class DemoService extends Service {
 
   @Route("/demo/subscribe", ["POST"])
   async subscribe(ctx: Context) {
-    let { url } = ctx.getRequestBody();
-    if (!url.endsWith("/")) {
-      url += "/";
+    let services: CloudEventV1Service[] = ctx.getRequestBody();
+    if (!services || !services.length) {
+      throw 401;
     }
+    const url = services[0].subscriptionurl;
     this.log("INFO", "Subscribe to this one", url);
     if (this.subscriptions[url]) {
       return;
     }
 
     let res = await (
-      await fetch(`${url}subscriptions`, {
+      await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

@@ -91,7 +91,7 @@ class CloudEventController extends Controller {
 
   subscribe() {
     this.asyncAction("SUBSCRIBE", async () => {
-      let infos = await this.ajax("/demo/subscribe", "POST", this.getLocalState().currentService);
+      let infos = await this.ajax("/demo/subscribe", "POST", this.getLocalState().discoveryServices);
       this.updateInterval(infos);
       return { subscriptions: infos };
     });
@@ -99,7 +99,7 @@ class CloudEventController extends Controller {
 
   unsubscribe() {
     this.asyncAction("UNSUBSCRIBE", async () => {
-      let infos = await this.ajax("/demo/unsubscribe", "POST", this.getLocalState().currentService);
+      let infos = await this.ajax("/demo/unsubscribe", "POST", this.getLocalState().discoveryServices);
       this.updateInterval(infos);
       return { subscriptions: infos };
     });

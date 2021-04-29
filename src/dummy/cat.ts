@@ -22,7 +22,7 @@ class CatService extends Service<CatServiceParameters> {
       setInterval(this.cat.bind(this), this.parameters.timeout);
       DiscoveryService.registerService({
         name: this.parameters.name,
-        types: ACTIONS
+        events: ACTIONS
       });
     }
   }

@@ -21,7 +21,7 @@ class PingService extends Service<PingServiceParameters> {
       setInterval(this.ping.bind(this), this.parameters.timeout);
       DiscoveryService.registerService({
         name: this.parameters.name,
-        types: ["ping"]
+        events: ["ping"]
       });
     }
   }

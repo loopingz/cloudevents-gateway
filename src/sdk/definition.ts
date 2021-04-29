@@ -80,7 +80,7 @@ export interface CloudEventV1Service {
   /**
    * [REQUIRED] CloudEvent types produced by the service
    */
-  types: CloudEventV1Type[];
+  events: CloudEventV1Type[];
 }
 
 /**
