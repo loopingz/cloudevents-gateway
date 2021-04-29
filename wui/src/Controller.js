@@ -2,44 +2,53 @@ import { Controller } from "redux-lz-controller";
 
 // Extends library controller
 class CloudEventController extends Controller {
+  interval = 0;
+  lastEvent = 0;
+
   constructor() {
     // This controller manage the subtree "contacts" of global Redux state
     super("cloudevents", {
       events: [],
-      subscriptions: { "0A4A733D11F878E99F38E8F28243E3D1": "subid" },
-      services: {
-        "41AE7BA24F4E640353EB3DE20E84FA61": {
-          url: "http://localhost:18080",
-          name: "Gateway",
-          type: "Gateway",
-          connections: ["0A4A733D11F878E99F38E8F28243E3D1", "E4CAB58F28BB19AE602CE3FD8DBD6B70"],
-        },
-        "0A4A733D11F878E99F38E8F28243E3D1": {
-          url: "http://localhost:18081",
-          name: "Garfield",
-          type: "Service",
-          connections: [],
-        },
-        E4CAB58F28BB19AE602CE3FD8DBD6B70: {
-          url: "http://localhost:18082",
-          name: "Ping",
-          type: "Service",
-          connections: [],
-        },
-      },
+      subscriptions: {},
+      services: {}
     }); // its default value is an empty array
-    setInterval(this.loadEvents.bind(this), 3000);
+  }
+
+  addService(name, url, callback) {
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    this.asyncAction(
+      "ADD_SERVICE",
+      async () => {
+        let infos = await this.ajax("/demo/services", "POST", { name, url });
+        let services = { ...this.getLocalState().services };
+        services[infos.id] = infos;
+        return { services };
+      },
+      callback
+    );
+  }
+
+  deleteService(id) {
+    this.asyncAction("DELETE_SERVICE", async () => {
+      await this.ajax(`/demo/services/${id}`, "DELETE");
+      let services = { ...this.getLocalState().services };
+      delete services[id];
+      return { services };
+    });
   }
 
   init() {
     this.loadSubscriptions();
     this.loadProxies();
+    this.loadServices();
   }
 
   selectNode(node) {
     Controller.dispatch({
       type: "SELECT_NODE",
-      node,
+      node
     });
     this.refreshDiscovery(this.getLocalState().services[node]);
   }
@@ -51,9 +60,20 @@ class CloudEventController extends Controller {
     });
   }
 
+  updateInterval(infos) {
+    if (Object.keys(infos).length) {
+      if (!this.interval) {
+        this.interval = setInterval(this.loadEvents.bind(this), 3000);
+      }
+    } else if (this.interval) {
+      clearInterval(this.interval);
+    }
+  }
+
   loadSubscriptions() {
     this.asyncAction("LOAD_SUBSCRIPTIONS", async () => {
       let infos = await this.ajax("/demo/subscriptions", "GET");
+      this.updateInterval(infos);
       return { subscriptions: infos };
     });
   }
@@ -65,13 +85,14 @@ class CloudEventController extends Controller {
   onCLEAR_EVENTS(state) {
     return {
       ...state,
-      events: [],
+      events: []
     };
   }
 
   subscribe() {
     this.asyncAction("SUBSCRIBE", async () => {
       let infos = await this.ajax("/demo/subscribe", "POST", this.getLocalState().currentService);
+      this.updateInterval(infos);
       return { subscriptions: infos };
     });
   }
@@ -79,6 +100,7 @@ class CloudEventController extends Controller {
   unsubscribe() {
     this.asyncAction("UNSUBSCRIBE", async () => {
       let infos = await this.ajax("/demo/unsubscribe", "POST", this.getLocalState().currentService);
+      this.updateInterval(infos);
       return { subscriptions: infos };
     });
   }
@@ -87,6 +109,12 @@ class CloudEventController extends Controller {
     this.asyncAction("GET_PROXIES", async () => {
       let infos = await this.ajax("/proxies", "GET");
       return { proxies: infos };
+    });
+  }
+
+  loadServices() {
+    this.asyncAction("GET_SERVICES", async () => {
+      return { services: await this.ajax("/demo/services", "GET") };
     });
   }
 
@@ -119,19 +147,20 @@ class CloudEventController extends Controller {
   onSELECT_NODE(state, action) {
     return {
       ...state,
-      currentService: state.services[action.node],
+      currentService: state.services[action.node]
     };
   }
 
   loadEvents() {
     this.asyncAction("REFRESH_EVENTS", async () => {
-      let events = await this.ajax("/demo/events");
+      let events = await this.ajax(`/demo/events?since=${this.lastEvent}`);
       if (!events.length) {
         return;
       }
       events.sort((a, b) => {
-        return new Date(a.time).getTime() > new Date(b.time).getTime() ? 1 : -1;
+        return new Date(a.time).getTime() > new Date(b.time).getTime() ? -1 : 1;
       });
+      this.lastEvent = new Date(events[0].time).getTime();
       return { events: [...events, ...this.getLocalState().events] };
     });
   }

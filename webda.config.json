@@ -6,8 +6,7 @@
     "ResourceService": {
       "type": "Webda/ResourceService",
       "url": "/demo/ui",
-      "folder": "./resources",
-      "rootRedirect": true
+      "folder": "./resources"
     },
     "ProxyStore": {
       "type": "Webda/MemoryStore",

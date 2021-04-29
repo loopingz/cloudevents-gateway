@@ -4,5 +4,6 @@
     "CloudEventsGateway/Proxy": "lib/models/proxy.js",
     "CloudEventsGateway/Subscription": "lib/models/subscription.js"
   },
-  "deployers": {}
+  "deployers": {},
+  "schemas": {}
 }

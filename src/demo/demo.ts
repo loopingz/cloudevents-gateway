@@ -6,10 +6,23 @@ import { v4 as uuidv4 } from "uuid";
 class DemoService extends Service {
   eventsBuffer: CloudEvent[] = [];
   currentSecret: string = "";
-  subscriptions: {[key:string]: string} = {};
+  subscriptions: { [key: string]: string } = {};
+  services: { [key: string]: { name: string; url: string; type: string } } = {
+    GATEWAY: {
+      url: "http://localhost:18080",
+      name: "Gateway",
+      type: "Gateway"
+    }
+  };
 
   resolve() {
     this.currentSecret = uuidv4();
+    setInterval(this.cleanEvents.bind(this), 30000);
+  }
+
+  cleanEvents() {
+    let filter = Date.now() - 60000;
+    this.eventsBuffer = this.eventsBuffer.filter(evt => new Date(evt.time).getTime() > filter);
   }
 
   @Route("/demo/entrypoint", ["POST"])
@@ -20,16 +33,49 @@ class DemoService extends Service {
     this.eventsBuffer.push(ctx.getRequestBody());
   }
 
-  @Route("/demo/events")
+  @Route("/demo/events{?since}")
   async events(ctx: Context) {
+    let filter = ctx.getParameters().since;
+    if (filter) {
+      ctx.write(this.eventsBuffer.filter(evt => new Date(evt.time).getTime() > filter));
+      return;
+    }
     ctx.write(this.eventsBuffer);
-    this.eventsBuffer = [];
   }
 
-  @Route("/demo/discover",  ["POST"])
+  @Route("/demo/services", ["GET"])
+  async listServices(ctx: Context) {
+    this.services.GATEWAY.url = ctx.getHttpContext().getAbsoluteUrl("/");
+    ctx.write(this.services);
+  }
+
+  @Route("/demo/services/{uuid}", ["DELETE"])
+  async deleteService(ctx: Context) {
+    if (this.services[ctx.getParameters().uuid]) {
+      delete this.services[ctx.getParameters().uuid];
+    }
+    ctx.write(this.services);
+  }
+
+  @Route("/demo/services", ["POST"])
+  async addService(ctx: Context) {
+    let serv = ctx.getRequestBody();
+    let id = require("crypto").createHash("md5").update(serv.url).digest("hex");
+    if (this.services[id]) {
+      throw 409;
+    }
+    this.services[id] = { ...serv, id };
+    ctx.write(this.services[id]);
+  }
+
+  @Route("/demo/discover", ["POST"])
   async discover(ctx: Context) {
     let { url } = ctx.getRequestBody();
-    ctx.write(await (await fetch(`${url}/services`)).json());
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    this.log("INFO", `Discovering ${url}`);
+    ctx.write(await (await fetch(`${url}services`)).json());
   }
 
   @Route("/demo/subscriptions")
@@ -40,9 +86,13 @@ class DemoService extends Service {
   @Route("/demo/unsubscribe", ["POST"])
   async unsubscribe(ctx: Context) {
     let { url } = ctx.getRequestBody();
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    this.log("INFO", "Subscribe to this one", url);
     if (this.subscriptions[url]) {
       await fetch(this.subscriptions[url], {
-        method: "DELETE",
+        method: "DELETE"
       });
       delete this.subscriptions[url];
     }
@@ -52,9 +102,16 @@ class DemoService extends Service {
   @Route("/demo/subscribe", ["POST"])
   async subscribe(ctx: Context) {
     let { url } = ctx.getRequestBody();
-    this.log("INFO", "Will subscribe to this one", url);
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    this.log("INFO", "Subscribe to this one", url);
+    if (this.subscriptions[url]) {
+      return;
+    }
+
     let res = await (
-      await fetch(`${url}/subscriptions`, {
+      await fetch(`${url}subscriptions`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -68,7 +125,7 @@ class DemoService extends Service {
         })
       })
     ).json();
-    this.subscriptions[url] = `${url}/subscriptions/${res.id}`;
+    this.subscriptions[url] = `${url}subscriptions/${res.id}`;
     ctx.write(this.subscriptions);
   }
 }

@@ -1,9 +1,10 @@
 import React from "react";
+import { CircularProgress } from "@material-ui/core";
 
-export default function SelectService() {
+export default function LoadingPanel() {
   return (
     <div style={{ height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
-      Please select a service
+      <CircularProgress />
     </div>
   );
 }

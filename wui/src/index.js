@@ -16,13 +16,13 @@ import { Provider } from "react-redux";
 import CloudEventController from "./Controller";
 new CloudEventController();
 
-CloudEventController.setEndpoint("http://192.168.86.52:18080");
+CloudEventController.setEndpoint(window.location.origin);
 //
 
 const persistConfig = {
   key: "root",
   storage: storage,
-  blacklist: ["notifications"],
+  blacklist: ["notifications"]
 };
 
 // Retrieve our global reducers

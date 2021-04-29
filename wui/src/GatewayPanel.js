@@ -1,12 +1,13 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Controller } from "redux-lz-controller";
+import { Button } from "@material-ui/core";
 
 export default function GatewayPanel({ gateway }) {
-  const { services, proxies } = useSelector((state) => state.cloudevents);
+  const { services, proxies } = useSelector(state => state.cloudevents);
   return (
     <div style={{ paddingTop: 30 }}>
-      {Object.keys(services).map((id) => {
+      {Object.keys(services).map(id => {
         let s = services[id];
         if (s === gateway) {
           return undefined;
@@ -21,7 +22,8 @@ export default function GatewayPanel({ gateway }) {
         return (
           <div className={className}>
             <div>{s.name}</div>
-            <button
+            <Button
+              variant="contained"
               onClick={() => {
                 if (proxy) {
                   Controller.get("cloudevents").proxyDisconnect(proxy);
@@ -31,7 +33,7 @@ export default function GatewayPanel({ gateway }) {
               }}
             >
               {proxy ? "Disconnect" : "Connect"}
-            </button>
+            </Button>
           </div>
         );
       })}

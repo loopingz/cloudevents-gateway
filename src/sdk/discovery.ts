@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { CloudEventV1Service, CloudEventV1Type } from "./definition";
 
 interface RequestHandler {
@@ -28,6 +29,11 @@ export class DiscoveryService {
    * Services mapped by name
    */
   static servicesMap: { [key: string]: CloudEventV1Service } = {};
+
+  /**
+   * Emitter
+   */
+  static emitter = new EventEmitter();
 
   /**
    * Register your service to the DiscoveryService
@@ -76,6 +82,17 @@ export class DiscoveryService {
    */
   static getServices(): CloudEventV1Service[] {
     return this.searchService();
+  }
+
+  /**
+   * Remove a service
+   *
+   * @param id
+   */
+  static deleteService(id: string) {
+    if (DiscoveryService.servicesMap[id]) {
+      delete DiscoveryService.servicesMap[id];
+    }
   }
 
   /**

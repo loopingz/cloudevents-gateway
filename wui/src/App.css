@@ -4,6 +4,7 @@ body {
 .App {
   text-align: center;
   max-height: 100vh;
+  height: 100vh;
 }
 
 .App-logo {
@@ -19,12 +20,25 @@ body {
   height: calc(100vh - 60px);
   justify-content: space-evenly;
 }
+
 .App-content > div {
   width: 100%;
   border-right: 3px solid #282c34;
+  display: flex;
+  flex-direction: column;
 }
 .App-content > div:last-child {
   border-right: 0px solid #282c34;
+}
+.Column-content {
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+.App-content > div > div:last-child {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 200px;
 }
 
 .Column-header {
@@ -34,6 +48,12 @@ body {
   font-weight: bold;
   font-size: 20px;
   padding-top: 10px;
+}
+
+.actionIcon {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .serviceBlock {
@@ -77,11 +97,16 @@ body {
   background-color: #282c34;
   height: 60px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+}
+
+.App-header h1 {
+  font-size: 30px;
+  padding-left: 30px;
 }
 
 .App-link {

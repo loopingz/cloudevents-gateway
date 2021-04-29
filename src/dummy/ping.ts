@@ -1,21 +1,26 @@
-import { Bean, Service } from "@webda/core";
+import { Bean, Service, ServiceParameters } from "@webda/core";
 import * as process from "process";
 import { CloudEvent } from "cloudevents";
 import { CloudEventEmitter } from "../sdk/emitter";
 import { DiscoveryService } from "../sdk/discovery";
 
+interface PingServiceParameters extends ServiceParameters {
+  timeout: number;
+  name: string;
+}
+
 /**
  * Simple service
  */
 @Bean
-class PingService extends Service {
+class PingService extends Service<PingServiceParameters> {
   async init() {
     if (process.env.PING_INTERVAL) {
-      this._params.timeout = process.env.PING_INTERVAL;
-      this._params.name = process.env.PING_NAME || "org.loopingz.services.PingService";
-      setInterval(this.ping.bind(this), this._params.timeout);
+      this.parameters.timeout = Number.parseInt(process.env.PING_INTERVAL);
+      this.parameters.name = process.env.PING_NAME || "org.loopingz.services.PingService";
+      setInterval(this.ping.bind(this), this.parameters.timeout);
       DiscoveryService.registerService({
-        name: this._params.name,
+        name: this.parameters.name,
         types: ["ping"]
       });
     }
@@ -24,7 +29,7 @@ class PingService extends Service {
   ping() {
     CloudEventEmitter.event(
       new CloudEvent({
-        source: this._params.name,
+        source: this.parameters.name,
         type: "ping"
       })
     );

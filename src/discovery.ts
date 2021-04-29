@@ -1,4 +1,4 @@
-import { Service, Context, Bean, Store, Route } from "@webda/core";
+import { Service, Context, Bean, Store, Route, RequestFilter, ServiceParameters } from "@webda/core";
 import { CloudEventV1Service } from "./sdk/definition";
 import { DiscoveryService } from "./sdk/discovery";
 import { Proxy } from "./models/proxy";
@@ -15,31 +15,87 @@ class DiscoveryFilter {
   }
 }
 
+interface GatewayDiscoveryParameters extends ServiceParameters {
+  prefix: string;
+}
 @Bean
-export class GatewayDiscoveryService extends Service {
+export class GatewayDiscoveryService extends Service<GatewayDiscoveryParameters> implements RequestFilter<Context> {
+  async checkRequest(context: Context): Promise<boolean> {
+    return true;
+  }
+
   permissions: DiscoveryFilter = new DiscoveryFilter();
   // @ts-ignore
   proxyStore: Store<Proxy> = undefined;
-  proxies: {[key:string]: {url: string, subscriptionId: string}} = {};
+  proxies: { [key: string]: { url: string; subscriptionId: string } } = {};
 
   resolve() {
-    let prefix = this._params.prefix || "";
-    this._addRoute(`${prefix}/services{?name}`, ["GET"], this.listServices);
-    this._addRoute(`${prefix}/services/{id}`, ["GET"], this.getServiceRequest);
+    this._webda.registerRequestFilter(this);
+    let prefix = this.parameters.prefix || "";
+    this.addRoute(`${prefix}/services{?name}`, ["GET"], this.listServices);
+    this.addRoute(`${prefix}/services/{id}`, ["GET"], this.getServiceRequest);
     this.proxyStore = this.getService<Store<Proxy>>("ProxyStore");
+    if (process.env.WUI) {
+      this.addRoute(`/`, ["GET"], this.redirectUi);
+    } else {
+      this.addRoute(`/`, ["GET"], this.liveProbe);
+    }
+    // Discovery management
+    this.addRoute(`${prefix}/services{?import}`, ["POST"], this.addService);
+    this.addRoute(`${prefix}/services/{id}{?import}`, ["PUT"], this.updateService);
+    this.addRoute(`${prefix}/services/{id}`, ["DELETE"], this.deleteService);
   }
 
-  async refreshProxies() : Promise<CloudEventV1Service[]> {
+  addService(ctx: Context) {
+    if (ctx.getParameters().import) {
+      // Should be an array
+      ctx.getRequestBody().forEach((service: any) => {
+        DiscoveryService.registerService(service);
+      });
+    } else {
+      DiscoveryService.registerService(ctx.getRequestBody());
+    }
+  }
+
+  updateService(ctx: Context) {
+    const id = ctx.getParameters().id;
+    const service = { ...DiscoveryService.getServices()[id], ...ctx.getRequestBody() };
+    if (!ctx.getParameters().import && !DiscoveryService.getServices()[id]) {
+      throw 404;
+    }
+    DiscoveryService.deleteService(id);
+    DiscoveryService.registerService(service);
+  }
+
+  deleteService(ctx: Context) {
+    DiscoveryService.deleteService(ctx.getParameters().id);
+  }
+
+  liveProbe(ctx: Context) {}
+
+  redirectUi(ctx: Context) {
+    // Fixed in next webda.io
+    if (ctx.getHttpContext().getHeader("x-forwarded-port")) {
+      ctx.getHttpContext().port = parseInt(ctx.getHttpContext().getHeader("x-forwarded-port"));
+    }
+    ctx.redirect(ctx.getHttpContext().getAbsoluteUrl("/demo/ui/"));
+  }
+
+  async refreshProxies(): Promise<CloudEventV1Service[]> {
     // @ts-ignore
     const flat = arr => [].concat(...arr);
-    return flat(await Promise.all(Object.values(this.proxies).map(async (proxy) => {
-      try {
-        return await (await fetch(`${proxy.url}/services`)).json()
-      } catch (err) {
-        this.log("ERROR", "refreshProxies", err);
-        return [];
-      }
-    })));
+    return flat(
+      await Promise.all(
+        Object.values(this.proxies).map(async proxy => {
+          try {
+            return await (await fetch(`${proxy.url}services`)).json();
+          } catch (err) {
+            this.log("ERROR", "refreshProxies", err);
+            return [];
+          }
+        })
+      )
+    );
   }
 
   async filterProxyServices(name: string = "") {
@@ -47,9 +103,10 @@ export class GatewayDiscoveryService extends Service {
   }
 
   async listServices(ctx: Context) {
-    let {name = ""} = ctx.getPathParameters();
+    let { name = "" } = ctx.getPathParameters();
     ctx.write(
-      [...DiscoveryService.searchService(name), ...await this.filterProxyServices(name)].filter(service => this.permissions.canAccessService(service, ctx))
+      [...DiscoveryService.searchService(name), ...(await this.filterProxyServices(name))]
+        .filter(service => this.permissions.canAccessService(service, ctx))
         .map(service => this.permissions.filterTypes(service, ctx))
         .map(service => this.completeService(ctx, service))
     );
@@ -57,6 +114,10 @@ export class GatewayDiscoveryService extends Service {
 
   completeService(ctx: Context, service: CloudEventV1Service): CloudEventV1Service {
     let serv = this.permissions.filterTypes(service, ctx);
+    // Fixed in next webda.io
+    if (ctx.getHttpContext().getHeader("x-forwarded-port")) {
+      ctx.getHttpContext().port = parseInt(ctx.getHttpContext().getHeader("x-forwarded-port"));
+    }
     return {
       ...serv,
       url: `${ctx.getHttpContext().getAbsoluteUrl(serv.url)}`,
@@ -79,12 +140,15 @@ export class GatewayDiscoveryService extends Service {
       return;
     }
     let { url } = ctx.getRequestBody();
-    let id = crypto.createHash('sha1').update(url).digest('hex');
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    let id = crypto.createHash("sha1").update(url).digest("hex");
     if (this.proxies[id]) {
       throw 409;
     }
     let res = await (
-      await fetch(`${url}/subscriptions`, {
+      await fetch(`${url}subscriptions`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -101,8 +165,8 @@ export class GatewayDiscoveryService extends Service {
     this.proxies[id] = {
       url,
       subscriptionId: res.id
-    }
-    ctx.write({id, url})
+    };
+    ctx.write({ id, url });
   }
 
   @Route("/proxies/{id}", ["DELETE"])
@@ -111,11 +175,14 @@ export class GatewayDiscoveryService extends Service {
     if (!this.proxies[id]) {
       throw 404;
     }
-    const url = this.proxies[id].url;
-    await fetch(`${url}/subscriptions/${this.proxies[id].subscriptionId}`, {
+    var url = this.proxies[id].url;
+    if (!url.endsWith("/")) {
+      url += "/";
+    }
+    await fetch(`${url}subscriptions/${this.proxies[id].subscriptionId}`, {
       method: "DELETE",
       headers: { "content-type": "application/json" }
-    })
+    });
     delete this.proxies[id];
     ctx.write(this.proxies);
   }
