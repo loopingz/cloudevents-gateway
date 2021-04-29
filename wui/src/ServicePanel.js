@@ -14,6 +14,10 @@ export default function ServicePanel() {
   if (_async && _async.REFRESH_DISCOVERY && _async.REFRESH_DISCOVERY.syncing) {
     return <LoadingPanel />;
   }
+  let subscriptionUrl = `${currentService.url}/subscriptions`;
+  if (discoveryServices && discoveryServices.length) {
+    subscriptionUrl = discoveryServices[0].subscriptionurl;
+  }
 
   return (
     <div>
@@ -26,7 +30,7 @@ export default function ServicePanel() {
           .map(e => {
             return <div>{e}</div>;
           })}
-        <div style={{ paddingTop: 10, color: "red" }}>This UI will use {currentService.url}subscriptions</div>
+        <div style={{ paddingTop: 10, color: "red" }}>This UI will use {subscriptionUrl}</div>
       </div>
       <Button
         variant="contained"

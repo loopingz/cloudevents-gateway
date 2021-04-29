@@ -106,7 +106,7 @@ class DemoService extends Service {
     if (!services || !services.length) {
       throw 401;
     }
-    const url = services[0].subscriptionurl;
+    const url = services[0].subscriptionurl || `${services[0].url}/subscriptions`;
     this.log("INFO", "Subscribe to this one", url);
     if (this.subscriptions[url]) {
       return;
