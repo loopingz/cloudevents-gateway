@@ -11,9 +11,13 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
+    "@types/jest": "^27.0.1",
     "@types/node": "^14.14.6",
     "@types/node-fetch": "^2.5.7",
-    "@types/uuid": "^8.3.0"
+    "@types/uuid": "^8.3.0",
+    "jest": "^27.1.1",
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.2"
   },
   "files": [
     "lib",
@@ -21,6 +25,10 @@
     "webda.config.json",
     "webda.module.json"
   ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
   "webda": {
     "namespace": "CloudEventsGateway"
   }

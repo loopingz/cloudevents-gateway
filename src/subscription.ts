@@ -2,7 +2,7 @@ import { Service, Route, Context, MemoryStore, Store, CoreModel, Core } from "@w
 import { CloudEvent } from "cloudevents";
 import { CloudEventEmitter } from "./sdk/emitter";
 import { CloudEventV1Service } from "./sdk/definition";
-import { Subscription } from "./models/subscription";
+import { HttpSettings, Subscription } from "./models/subscription";
 //import * as fetch from "node-fetch";
 const fetch = require("node-fetch");
 
@@ -31,9 +31,10 @@ export class SubscriptionService extends Service {
     // Do something
     switch (subscription.protocol) {
       case "HTTP":
+        let settings: HttpSettings = <HttpSettings>subscription.protocolsettings ?? {};
         await fetch(subscription.sink, {
-          method: subscription.protocolsettings.method || "POST",
-          headers: { ...subscription.protocolsettings.headers, "content-type": "application/json" },
+          method: settings.method || "POST",
+          headers: { ...settings.headers, "content-type": "application/json" },
           body: JSON.stringify(evt)
         });
         break;
@@ -56,7 +57,7 @@ export class SubscriptionService extends Service {
       subscription.load(ctx.getRequestBody());
       this.log("INFO", "Adding a new subscription", subscription);
       await this.store.save(subscription, ctx);
-      subscription.id = subscription.uuid;
+      subscription.id = subscription.getUuid();
       ctx.write(subscription);
     } else {
       let result = [];

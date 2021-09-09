@@ -25,6 +25,22 @@ export interface CloudEventV1Service {
   name: string;
 
   /**
+   * [REQUIRED] in responses from the Discovery Endpoint.
+   * [MUST] be an unsigned 32-bit integer
+   *
+   * The Discovery Endpoint's epoch value for this Service Entry.
+   * This specification does not mandate any particular semantic meaning to the value used.
+   * For example, implementations are free to use a value that represents a timestamp or
+   * could choose to simply use a monotonically increasing number. The only requirement is
+   * that the value MUST always increase each time the Service Entry is updated.
+   * This allows for a quick integer comparision to determine which version of this Service Entry
+   * is the latest - meaning, the one with the larger integer value.
+   *
+   * @required MUST be Unsigned 32-bit Integer
+   */
+  epoch: number;
+
+  /**
    * [OPTIONAL] Human readable description.
    * If present, MUST be a non-empty string
    */
@@ -159,6 +175,12 @@ export interface CloudEventV1Type {
    * If `dataschama` is present, this field MUST NOT be present.
    */
   dataschemacontent?: string;
+  /**
+   * A URI Template according to RFC 6570 that defines how the source attribute will be generated.
+   *
+   * If present, MUST be a Level 1 template compliant to RFC 6570
+   */
+  sourcetemplate?: string;
   /**
    * An array or CloudEvents
    * [Extension Context Attributes](http://github.com/cloudevents/spec/blob/master/spec.md#extension-context-attributes)

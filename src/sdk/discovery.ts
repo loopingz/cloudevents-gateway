@@ -6,9 +6,10 @@ interface RequestHandler {
     req: { query: { matching: string }; url: string },
     res: {
       end: () => void;
-      status: (
-        code: number
-      ) => { json: (obj: Record<string, unknown> | CloudEventV1Service[]) => string; end: () => void };
+      status: (code: number) => {
+        json: (obj: Record<string, unknown> | CloudEventV1Service[]) => string;
+        end: () => void;
+      };
     }
   ): void;
 }
@@ -61,6 +62,7 @@ export class DiscoveryService {
     }
     DiscoveryService.servicesMap[service.name] = {
       url: `/services/${service.name}`,
+      epoch: Date.now(),
       ...service,
       specversions: ["1.0"],
       protocols: ["http"],
