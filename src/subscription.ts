@@ -63,7 +63,7 @@ export class SubscriptionService extends Service {
       let result = [];
       let subs = await this.store.getAll();
       for (let i in subs) {
-        if (subs[i].canAccess(ctx)) {
+        if (await subs[i].canAccess(ctx)) {
           result.push(subs[i]);
         }
       }
