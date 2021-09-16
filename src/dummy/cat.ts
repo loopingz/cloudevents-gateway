@@ -3,6 +3,7 @@ import * as process from "process";
 import { CloudEvent } from "cloudevents";
 import { CloudEventEmitter } from "../sdk/emitter";
 import { DiscoveryService } from "../sdk/discovery";
+import * as crypto from "crypto";
 
 interface CatServiceParameters extends ServiceParameters {
   timeout: number;
@@ -19,10 +20,15 @@ class CatService extends Service<CatServiceParameters> {
     if (process.env.CAT_NAME) {
       this.parameters.timeout = Number.parseInt(process.env.CAT_INTERVAL || "15000");
       this.parameters.name = `org.loopingz.cat.${process.env.CAT_NAME}`;
+      // Generate a fake uuid for now
+      let id = crypto.createHash("md5").update(`loopingz/cloudevents-gateway_${this.parameters.name}`).digest("hex");
+      id = id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, "$1-$2-$3-$4-$5");
       setInterval(this.cat.bind(this), this.parameters.timeout);
       DiscoveryService.registerService({
         name: this.parameters.name,
-        events: ACTIONS
+        events: ACTIONS,
+        epoch: 2,
+        id
       });
     }
   }

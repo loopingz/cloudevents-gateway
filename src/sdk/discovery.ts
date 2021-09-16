@@ -15,6 +15,8 @@ interface RequestHandler {
 }
 
 export interface SimpleCloudEventV1Service {
+  id: string;
+  epoch?: number;
   name: string;
   events: (string | CloudEventV1Type)[];
 }
